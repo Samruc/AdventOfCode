@@ -55,31 +55,45 @@ mark("5B", sum(int(sorted(l, key=cmp_to_key(lambda a, b: 1 if b + "|" + a in rul
 data = read("6", 2024, raw=True, strip=True)
 dirs = {"^": (0, -1), ">": (1, 0), "v": (0, 1), "<": (-1, 0)}
 turn = {"^": ">", ">": "v", "v": "<", "<": "^"}
-location = None
-direction = None
+start_direction, start_location = None, None
 for y, l in enumerate(data):
     for x, c in enumerate(l):
         if c in dirs:
-            location = (x, y)
-            direction = c
-visited = {location}
-visited_with_dir = {str(location) + direction}
-loop_blocks = set()
-while True:
-    try:
-        x = location[0] + dirs[direction][0]
-        y = location[1] + dirs[direction][1]
-        if data[y][x] in [".", "^"]:
-            if data[y][x] == ".":
-                if str(location) + turn[direction] in visited_with_dir:
-                    loop_blocks.add((x, y))
-            location = (x, y)
-            visited.add(location)
-            visited_with_dir.add(str(location) + direction)
-        else:
-            direction = turn[direction]
-    except IndexError:
-        break
+            start_location = (x, y)
+            start_direction = c
+            break
 
-mark("6A", len(visited), 5269)
-print(len(loop_blocks))  # Not correct, loop test is too simple. Undershoots on test data as well
+def guard_path(data, direction, location, add_obstacle):
+    loops_found = 0
+    visited = {location}
+    visited_dir = {str(location) + direction}
+    tried_obstacles = set()
+    while True:
+        try:
+            x = location[0] + dirs[direction][0]
+            y = location[1] + dirs[direction][1]
+            if x < 0 or y < 0 or x >= len(data) or y >= len(data):
+                raise IndexError()
+            if data[y][x] in [".", "^"]:
+                location = (x, y)
+                if add_obstacle and data[y][x] == "." and location not in tried_obstacles:
+                    tried_obstacles.add(location)
+                    data[y] = data[y][:x] + "#" + data[y][x+1:]
+                    if guard_path(data, direction, location, add_obstacle=False) == 10**9:
+                        loops_found += 1
+                    data[y] = data[y][:x] + "." + data[y][x+1:]
+
+                visited.add(location)
+                if str(location) + direction in visited_dir:
+                    return 10**9
+                else:
+                    visited_dir.add(str(location) + direction)
+            else:
+                direction = turn[direction]
+        except IndexError:
+            break
+
+    return len(visited), loops_found
+
+mark("6A", guard_path(data, start_direction, start_location, add_obstacle=False)[0], 5269)
+mark("6B", guard_path(data, start_direction, start_location, add_obstacle=True)[1], 1957)

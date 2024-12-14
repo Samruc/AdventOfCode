@@ -98,4 +98,13 @@ def guard_path(obstacles, direction, location, add_obstacle):
 
 mark("6A", guard_path(obstacles, start_direction, start_location, add_obstacle=False)[0], 5269)
 # mark("6B", guard_path(obstacles, start_direction, start_location, add_obstacle=True)[1], 1957)
-mark("6B", 1957, 1957, skip_and_add_time=4.6)
+mark("6B", None, 1957, skip_and_add_time=4.6)
+
+data = read("7", 2024, raw=True, strip=True)
+lines = [l.replace(": ", ":").split(":") for l in data]
+lines = [[int(l[0]), [int(s) for s in l[1].split(" ")]] for l in lines]
+def is_attainable(l):
+    return (l[0] == l[1][0] if len(l[1]) == 1
+                            else (is_attainable([l[0] - l[1][-1], l[1][:-1]]) or
+                                  l[0] % l[1][-1] == 0 and is_attainable([l[0] // l[1][-1], l[1][:-1]])))
+mark("7A", sum(l[0] if is_attainable(l) else 0 for l in lines), 2437272016585)

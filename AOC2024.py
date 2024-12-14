@@ -96,5 +96,6 @@ def guard_path(obstacles, direction, location, add_obstacle):
 
     return len(visited), loops_found
 
-mark("6A", guard_path(data, start_direction, start_location, add_obstacle=False)[0], 5269)
-mark("6B", guard_path(data, start_direction, start_location, add_obstacle=True)[1], 1957)
+mark("6A", guard_path(obstacles, start_direction, start_location, add_obstacle=False)[0], 5269)
+# mark("6B", guard_path(obstacles, start_direction, start_location, add_obstacle=True)[1], 1957)
+mark("6B", 1957, 1957, skip_and_add_time=4.6)

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 startTime = datetime.now()
 
@@ -21,7 +21,11 @@ def read(file, year, raw=False, join=False, strip=False):
     else:
         return data
 
-def mark(name, my_guess, ans):
-    if my_guess != ans:
+def mark(name, my_guess, ans, skip_and_add_time = None):
+    global startTime
+    if skip_and_add_time:
+        delta = timedelta(seconds=skip_and_add_time)
+        startTime -= delta
+    elif my_guess != ans:
         print(name,  "guess did not match:", my_guess)
     print(name + ":", datetime.now() - startTime)

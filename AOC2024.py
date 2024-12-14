@@ -56,14 +56,16 @@ data = read("6", 2024, raw=True, strip=True)
 dirs = {"^": (0, -1), ">": (1, 0), "v": (0, 1), "<": (-1, 0)}
 turn = {"^": ">", ">": "v", "v": "<", "<": "^"}
 start_direction, start_location = None, None
+obstacles = set()
 for y, l in enumerate(data):
     for x, c in enumerate(l):
         if c in dirs:
             start_location = (x, y)
             start_direction = c
-            break
+        elif c == "#":
+            obstacles.add((x, y))
 
-def guard_path(data, direction, location, add_obstacle):
+def guard_path(obstacles, direction, location, add_obstacle):
     loops_found = 0
     visited = {location}
     visited_dir = {str(location) + direction}
@@ -73,13 +75,13 @@ def guard_path(data, direction, location, add_obstacle):
             y = location[1] + dirs[direction][1]
             if x < 0 or y < 0 or x >= len(data) or y >= len(data):
                 raise IndexError()
-            if data[y][x] in [".", "^"]:
+            if (x, y) not in obstacles:
                 next_location = (x, y)
-                if add_obstacle and data[y][x] == "." and next_location not in visited:
-                    data[y] = data[y][:x] + "#" + data[y][x+1:]
-                    if not guard_path(data, direction, location, add_obstacle=False):
+                if add_obstacle and (x, y) != start_location and next_location not in visited:
+                    obstacles.add((x, y))
+                    if not guard_path(obstacles, direction, location, add_obstacle=False):
                         loops_found += 1
-                    data[y] = data[y][:x] + "." + data[y][x+1:]
+                    obstacles.remove((x, y))
 
                 location = next_location
                 visited.add(location)

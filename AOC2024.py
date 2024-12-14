@@ -67,7 +67,6 @@ def guard_path(data, direction, location, add_obstacle):
     loops_found = 0
     visited = {location}
     visited_dir = {str(location) + direction}
-    tried_obstacles = set()
     while True:
         try:
             x = location[0] + dirs[direction][0]
@@ -75,17 +74,17 @@ def guard_path(data, direction, location, add_obstacle):
             if x < 0 or y < 0 or x >= len(data) or y >= len(data):
                 raise IndexError()
             if data[y][x] in [".", "^"]:
-                location = (x, y)
-                if add_obstacle and data[y][x] == "." and location not in tried_obstacles:
-                    tried_obstacles.add(location)
+                next_location = (x, y)
+                if add_obstacle and data[y][x] == "." and next_location not in visited:
                     data[y] = data[y][:x] + "#" + data[y][x+1:]
-                    if guard_path(data, direction, location, add_obstacle=False) == 10**9:
+                    if not guard_path(data, direction, location, add_obstacle=False):
                         loops_found += 1
                     data[y] = data[y][:x] + "." + data[y][x+1:]
 
+                location = next_location
                 visited.add(location)
                 if str(location) + direction in visited_dir:
-                    return 10**9
+                    return None
                 else:
                     visited_dir.add(str(location) + direction)
             else:

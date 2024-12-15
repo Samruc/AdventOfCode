@@ -1,5 +1,5 @@
 import re
-from collections import Counter
+from collections import Counter, defaultdict
 from functools import cmp_to_key
 from pprint import pprint
 
@@ -121,3 +121,66 @@ def all_combinations(target, l, task_b=False):
 mark("7A", sum(l[0] if (l[0] in all_combinations(l[0], l[1])) else 0 for l in lines), 2437272016585)
 # mark("7B", sum(l[0] if (l[0] in all_combinations(l[0], l[1], True)) else 0 for l in lines), 162987117690649)
 mark("7B", None, 162987117690649, skip_and_add_time=2.45)
+
+data = read("8", 2024, raw=True, strip=True)
+antennas = defaultdict(list)
+x_max, y_max = len(data[0]), len(data)
+for y, l in enumerate(data):
+    for x, c in enumerate(l):
+        if c != ".":
+            antennas[c].append((x, y))
+def count_hotspots(more_steps=False):
+    hotspots = set()
+    for key in antennas.keys():
+        ants = antennas[key]
+        for a in ants:
+            for b in ants:
+                if a != b:
+                    new_x, new_y = 2*a[0] - b[0], 2*a[1] - b[1]
+                    while 0 <= new_x < x_max and 0 <= new_y < y_max:
+                        hotspots.add((new_x, new_y))
+                        new_x += a[0] - b[0]
+                        new_y += a[1] - b[1]
+                        if not more_steps:
+                            new_x = -1
+    if more_steps:
+        for key in antennas.keys():
+            for ant in antennas[key]:
+                hotspots.add(ant)
+    return len(hotspots)
+mark("8A", count_hotspots(), 214)
+mark("8B", count_hotspots(more_steps=True), 809)
+
+data = read("9", 2024, raw=True, strip=True)[0]
+print(len(data[:-2]))
+def task9(data):
+    left_digit = 0
+    pos = 0
+    checksum = 0
+    right_digit = len(data) // 2
+    while data:
+        # Front-fill
+        #print(data)
+        while int(data[0]) > 0:
+            checksum += left_digit * pos
+            data = str(int(data[0]) - 1) + data[1:]
+            #print(data, left_digit, "*", pos, "=", left_digit * pos, "->", checksum)
+            pos += 1
+        left_digit += 1
+        data = data[1:]
+        # Back-fill
+        while len(data) >= 2 and int(data[0]) > 0:
+            while data and int(data[-1]) == 0:
+                data = data[:-2]
+                right_digit -= 1
+            if data:
+                checksum += right_digit * pos
+                data = str(int(data[0]) - 1) + data[1:-1] + str(int(data[-1]) - 1)
+            #print(data, right_digit, "*", pos, "=", left_digit * pos, "->", checksum)
+            pos += 1
+        data = data[1:]
+    return checksum
+
+print(task9("12345"))
+print(task9("2333133121414131402"))
+mark("9A", task9(data), 6291146824486)

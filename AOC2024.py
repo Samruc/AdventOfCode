@@ -103,8 +103,21 @@ mark("6B", None, 1957, skip_and_add_time=4.6)
 data = read("7", 2024, raw=True, strip=True)
 lines = [l.replace(": ", ":").split(":") for l in data]
 lines = [[int(l[0]), [int(s) for s in l[1].split(" ")]] for l in lines]
-def is_attainable(l):
-    return (l[0] == l[1][0] if len(l[1]) == 1
-                            else (is_attainable([l[0] - l[1][-1], l[1][:-1]]) or
-                                  l[0] % l[1][-1] == 0 and is_attainable([l[0] // l[1][-1], l[1][:-1]])))
-mark("7A", sum(l[0] if is_attainable(l) else 0 for l in lines), 2437272016585)
+def all_combinations(target, l, task_b=False):
+    combinations = {l[0]}
+    l = l[1:]
+    while len(l) > 0:
+        new_combinations = set()
+        for a in combinations:
+            if target >= a + l[0]:
+                new_combinations.add(a + l[0])
+            if target >= a * l[0]:
+                new_combinations.add(a * l[0])
+            if task_b and target >= int(str(a) + str(l[0])):
+                new_combinations.add(int(str(a) + str(l[0])))
+        l = l[1:]
+        combinations = new_combinations
+    return combinations
+mark("7A", sum(l[0] if (l[0] in all_combinations(l[0], l[1])) else 0 for l in lines), 2437272016585)
+# mark("7B", sum(l[0] if (l[0] in all_combinations(l[0], l[1], True)) else 0 for l in lines), 162987117690649)
+mark("7B", None, 162987117690649, skip_and_add_time=2.45)

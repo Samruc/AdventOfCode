@@ -152,35 +152,84 @@ mark("8A", count_hotspots(), 214)
 mark("8B", count_hotspots(more_steps=True), 809)
 
 data = read("9", 2024, raw=True, strip=True)[0]
-print(len(data[:-2]))
-def task9(data):
+def task9A(data):
     left_digit = 0
     pos = 0
     checksum = 0
     right_digit = len(data) // 2
     while data:
         # Front-fill
-        #print(data)
         while int(data[0]) > 0:
             checksum += left_digit * pos
             data = str(int(data[0]) - 1) + data[1:]
-            #print(data, left_digit, "*", pos, "=", left_digit * pos, "->", checksum)
             pos += 1
         left_digit += 1
         data = data[1:]
         # Back-fill
-        while len(data) >= 2 and int(data[0]) > 0:
+        while data and int(data[0]) > 0:
             while data and int(data[-1]) == 0:
                 data = data[:-2]
                 right_digit -= 1
             if data:
                 checksum += right_digit * pos
                 data = str(int(data[0]) - 1) + data[1:-1] + str(int(data[-1]) - 1)
-            #print(data, right_digit, "*", pos, "=", left_digit * pos, "->", checksum)
             pos += 1
         data = data[1:]
     return checksum
 
-print(task9("12345"))
-print(task9("2333133121414131402"))
-mark("9A", task9(data), 6291146824486)
+def task9B(d=None):
+    start_len = len(d)
+    digits = list(range(0, len(d) // 2 + 1))
+    d = list(int(n) for n in d)
+    digit_to_move = len(d) // 2
+    while digit_to_move > 0:
+        digit_to_move_index = digits.index(digit_to_move) * 2
+        space_needed = d[digit_to_move_index]
+        space_searcher = 1
+        while space_searcher < digit_to_move_index and d[space_searcher] < space_needed:
+            if digits[space_searcher // 2] == digit_to_move:
+                space_searcher += digit_to_move_index  # Give up
+            else:
+                space_searcher += 2
+        if space_searcher < digit_to_move_index:
+            additional_hole_after = 0 if digit_to_move_index >= len(d) - 1 \
+                else d[digit_to_move_index + 1]
+            if space_searcher == digit_to_move_index - 1:
+                d = (d[:space_searcher] + [0] + [space_needed] +
+                     [space_needed + d[digit_to_move_index + 1]] +
+                     d[digit_to_move_index + 2:])
+            else:
+                d = (d[:space_searcher] + [0] + [space_needed] +
+                     [d[space_searcher] - space_needed] +
+                     d[space_searcher + 1:digit_to_move_index-1] +
+                     [d[digit_to_move_index - 1] + space_needed + additional_hole_after] +
+                     d[digit_to_move_index + 2:])
+            digits = (digits[:space_searcher // 2 + 1] +
+                      [digit_to_move] +
+                      digits[space_searcher // 2 + 1: digit_to_move_index // 2] +
+                      digits[digit_to_move_index // 2 + 1:])
+            d = d[:start_len]
+
+        digit_to_move -= 1
+
+    # Checksum with unordered digits
+    checksum = 0
+    digit_index = 0
+    pos = 0
+    while d and digit_index < len(digits):
+        while d[0] > 0:
+            checksum += digits[digit_index] * pos
+            d = [d[0] - 1] + d[1:]
+            pos += 1
+        digit_index += 1
+        d = d[1:]
+        # Skip gaps
+        if d:
+            pos += d[0]
+            d = d[1:]
+
+    return checksum
+
+mark("9A", task9A(data), 6291146824486)
+# mark("9B", task9B(data), 6307279963620)
+mark("9B", None, 162987117690649, skip_and_add_time=5.57)

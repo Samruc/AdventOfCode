@@ -1,3 +1,4 @@
+import functools
 import re
 from collections import Counter, defaultdict
 from functools import cmp_to_key
@@ -233,3 +234,39 @@ def task9B(d=None):
 mark("9A", task9A(data), 6291146824486)
 # mark("9B", task9B(data), 6307279963620)
 mark("9B", None, 162987117690649, skip_and_add_time=5.57)
+
+data = read("10", 2024, raw=True, strip=True)
+
+@functools.cache
+def nines_reachable_from(x, y, count=False):
+    global data
+    current_value = int(data[y][x])
+    if current_value == 9:
+        return 1 if count else {(x, y)}
+    neighbor_candidates = [[x, y+1], [x+1, y], [x, y-1], [x-1, y]]
+    candidates = list(filter(lambda p : 0 <= p[0] < len(data) and 0 <= p[1] < len(data), neighbor_candidates))
+    step_candidates = list(filter(lambda p : int(data[p[1]][p[0]]) == current_value + 1, candidates))
+    if step_candidates:
+        if count:
+            nines = 0
+            for sc in step_candidates:
+                nines += nines_reachable_from(sc[0], sc[1], count=True)
+            return nines
+        else:
+            nines = set()
+            for sc in step_candidates:
+                nines = nines.union({nine for nine in nines_reachable_from(sc[0], sc[1])})
+            return nines
+    else:
+        return 0 if count else set()
+
+def task10(data, count=False):
+    trailheads = 0
+    for y, l in enumerate(data):
+        for x, c in enumerate(l):
+            if c == "0":
+                trailheads += nines_reachable_from(x, y, count) if count else len(nines_reachable_from(x, y, count))
+    return trailheads
+
+mark("10A", task10(data), 587)
+mark("10B", task10(data, count=True), 1340)

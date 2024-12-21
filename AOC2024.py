@@ -270,3 +270,28 @@ def task10(data, count=False):
 
 mark("10A", task10(data), 587)
 mark("10B", task10(data, count=True), 1340)
+
+data = read("11", 2024)[0]
+
+def split(numbers, times):
+    if times == 0:
+        return numbers
+    else:
+        split_numbers = Counter([])
+        for num in numbers:
+            if num == 0:
+                split_numbers[1] += numbers[0]
+            elif len(str(num)) % 2 == 0:
+                new1 = int(str(num)[:len(str(num)) // 2])
+                new2 = int(str(num)[len(str(num)) // 2:])
+                split_numbers[new1] += numbers[num]
+                split_numbers[new2] += numbers[num]
+            else:
+                split_numbers[num * 2024] += numbers[num]
+        return split(split_numbers, times - 1)
+
+def task11(numbers, times):
+    return sum(split(Counter(numbers), times).values())
+
+mark("11A", task11(data, 25), 235850)
+mark("11B", task11(data, 75), 279903140844645)

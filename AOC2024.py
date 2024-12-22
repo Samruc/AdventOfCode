@@ -272,7 +272,6 @@ mark("10A", task10(data), 587)
 mark("10B", task10(data, count=True), 1340)
 
 data = read("11", 2024)[0]
-
 def split(numbers, times):
     if times == 0:
         return numbers
@@ -289,9 +288,78 @@ def split(numbers, times):
             else:
                 split_numbers[num * 2024] += numbers[num]
         return split(split_numbers, times - 1)
-
 def task11(numbers, times):
     return sum(split(Counter(numbers), times).values())
-
 mark("11A", task11(data, 25), 235850)
 mark("11B", task11(data, 75), 279903140844645)
+
+data = read("12", 2024, raw=True, strip=True)
+
+unvisited = set()
+visited = set()
+for y, line in enumerate(data):
+    for x, c in enumerate(line):
+        unvisited.add((x, y, c))
+
+def score_region(tile, area, perimeter, corners):
+    global unvisited, visited
+    nbs = [(tile[0] + 1, tile[1], tile[2]),
+           (tile[0] - 1, tile[1], tile[2]),
+           (tile[0], tile[1] + 1, tile[2]),
+           (tile[0], tile[1] - 1, tile[2])]
+
+    area += 1
+
+    # Count perimeter
+    for nb in nbs:
+        if nb not in unvisited and nb not in visited:
+            perimeter += 1
+
+    # Count corners
+    dirs = [(+1, +0),
+            (+1, +1),
+            (+0, +1),
+            (-1, +1),
+            (-1, +0),
+            (-1, -1),
+            (+0, -1),
+            (+1, -1),]
+    is_inside = []
+    for d in dirs:
+        nb = (tile[0] + d[0], tile[1] + d[1], tile[2])
+        is_inside.append(nb in unvisited or nb in visited)
+    for i in [0, 2, 4, 6]:
+        if is_inside[i] and is_inside[(i + 2) % 8] and not is_inside[i + 1]:
+            corners += 1
+        if not is_inside[i] and not is_inside[(i + 2) % 8]:
+            corners += 1
+
+    if not any(nb in unvisited for nb in nbs):
+        return area, perimeter, corners
+
+    for nb in nbs:
+        if nb in unvisited:
+            unvisited.remove(nb)
+            visited.add(nb)
+            a, p, c = score_region(nb, 0, 0, 0)
+            area += a
+            perimeter += p
+            corners += c
+
+    return area, perimeter, corners
+
+def task12():
+    global unvisited, visited
+    scoreA, scoreB = 0, 0
+    while unvisited:
+        visited = set()
+        next_tile = unvisited.pop()
+        visited.add(next_tile)
+        a, p, c = score_region(next_tile, 0, 0, 0)
+        scoreA += a * p
+        scoreB += a * c
+    return scoreA, scoreB
+
+ansA, ansB = task12()
+mark("12A", ansA, 1471452)
+mark("12B", ansB, 863366)

@@ -363,3 +363,27 @@ def task12():
 ansA, ansB = task12()
 mark("12A", ansA, 1471452)
 mark("12B", ansB, 863366)
+
+data = read("13", 2024, raw=True, strip=True)
+rows = []
+while len(data) >= 3:
+    row = [int(data[0].split("+")[1].split(",")[0]),
+           int(data[0].split("+")[2]),
+           int(data[1].split("+")[1].split(",")[0]),
+           int(data[1].split("+")[2]),
+           int(data[2].split("=")[1].split(",")[0]),
+           int(data[2].split("=")[2])]
+    data = data[4:]
+    rows += [row]
+
+tokens = 0
+for ax, ay, bx, by, X, Y in rows:
+    row_min = None
+    for k in range(0, min(X // min(ax, bx) + 1, 101)):
+        for m in range(0, min(Y // min(ay, by) + 1, 101)):
+            if k * ax + m * bx == X and k * ay + m * by == Y:
+                cand = 3 * k + m
+                row_min = min(cand, row_min) if row_min else cand
+    tokens += row_min if row_min else 0
+
+mark("13A", tokens, 29517)

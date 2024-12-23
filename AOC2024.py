@@ -1,4 +1,5 @@
 import functools
+import numpy as np
 import re
 from collections import Counter, defaultdict
 from functools import cmp_to_key
@@ -13,12 +14,16 @@ mark("1A", sum(abs(a - b) for a, b in zip(sorted(col1), sorted(col2))), 2264607)
 mark("1B", sum(a * counter1[a] * counter2[a] for a in counter1.keys()), 19457120)
 
 data = read("2", 2024)
+
+
 def safety(line):
     l_comp, l_base = line[1:], line[:-1]
     return 1 if all(a - b in [1, 2, 3] for a, b in zip(l_base, l_comp)) \
-             or all(b - a in [1, 2, 3] for a, b in zip(l_base, l_comp)) else 0
+                or all(b - a in [1, 2, 3] for a, b in zip(l_base, l_comp)) else 0
+
+
 mark("2A", sum([safety(line) for line in data]), 483)
-mark("2B", sum([1 if any(safety(line[:i] + line[i+1:]) for i in range(len(line))) else 0 for line in data]), 528)
+mark("2B", sum([1 if any(safety(line[:i] + line[i + 1:]) for i in range(len(line))) else 0 for line in data]), 528)
 
 data = read("3", 2024, raw=True, join=True)
 do_dont = " ".join(s.split("don't()")[0] for s in data.split("do()"))
@@ -28,30 +33,30 @@ mark("3B", (sum([int(a) * int(b) for a, b in re.findall(r"mul\((\d{1,3}),(\d{1,3
 data = read("4", 2024, raw=True, strip=True)
 n = len(data)
 cols = ["".join(line[i] for line in data) for i in range(n)]
-dias = ["".join(data[i-j][j] for j in range(max(i-n+1, 0), min(i, n-1) + 1)) for i in range(2*n - 1)]
-dias += ["".join(data[j][n-1-i+j] for j in range(max(i-n+1, 0), min(i, n-1) + 1)) for i in range(2*n - 1)]
-mark("4A", sum(sum(1 if line[i:i+4] in ["XMAS", "SAMX"] else 0
-                   for i in range(len(line))) for line in data+cols+dias), 2401)
+dias = ["".join(data[i - j][j] for j in range(max(i - n + 1, 0), min(i, n - 1) + 1)) for i in range(2 * n - 1)]
+dias += ["".join(data[j][n - 1 - i + j] for j in range(max(i - n + 1, 0), min(i, n - 1) + 1)) for i in range(2 * n - 1)]
+mark("4A", sum(sum(1 if line[i:i + 4] in ["XMAS", "SAMX"] else 0
+                   for i in range(len(line))) for line in data + cols + dias), 2401)
 mark("4B", sum(sum(1 if data[i][j] == "A" and
-                    all([data[i+1][j+1] in ["M", "S"],
-                         data[i-1][j+1] in ["M", "S"],
-                         data[i+1][j-1] in ["M", "S"],
-                         data[i-1][j-1] in ["M", "S"]]) and
-                         data[i+1][j+1] != data[i-1][j-1] and
-                         data[i-1][j+1] != data[i+1][j-1]
-                   else 0 for j in range(1, n-1)) for i in range(1, n-1)), 1822)
+                        all([data[i + 1][j + 1] in ["M", "S"],
+                             data[i - 1][j + 1] in ["M", "S"],
+                             data[i + 1][j - 1] in ["M", "S"],
+                             data[i - 1][j - 1] in ["M", "S"]]) and
+                        data[i + 1][j + 1] != data[i - 1][j - 1] and
+                        data[i - 1][j + 1] != data[i + 1][j - 1]
+                   else 0 for j in range(1, n - 1)) for i in range(1, n - 1)), 1822)
 
 data = read("5", 2024, raw=True, strip=True)
 rules = set(data[:data.index("")])
-lists = [l.split(",") for l in data[data.index("")+1:]]
+lists = [l.split(",") for l in data[data.index("") + 1:]]
 mark("5A", sum(0 if any(i < j and b + "|" + a in rules
                         for i, a in enumerate(l) for j, b in enumerate(l))
-                else int(l[len(l) // 2]) for l in lists), 6242)
+               else int(l[len(l) // 2]) for l in lists), 6242)
 mark("5B", sum(int(sorted(l, key=cmp_to_key(lambda a, b: 1 if b + "|" + a in rules else
-                                                        -1 if a + "|" + b in rules else 0))[len(l) // 2])
-                if any(i < j and b + "|" + a in rules
-                        for i, a in enumerate(l) for j, b in enumerate(l))
-                else 0 for l in lists), 5169)
+-1 if a + "|" + b in rules else 0))[len(l) // 2])
+               if any(i < j and b + "|" + a in rules
+                      for i, a in enumerate(l) for j, b in enumerate(l))
+               else 0 for l in lists), 5169)
 
 data = read("6", 2024, raw=True, strip=True)
 dirs = {"^": (0, -1), ">": (1, 0), "v": (0, 1), "<": (-1, 0)}
@@ -65,6 +70,7 @@ for y, l in enumerate(data):
             start_direction = c
         elif c == "#":
             obstacles.add((x, y))
+
 
 def guard_path(obstacles, direction, location, add_obstacle):
     loops_found = 0
@@ -97,6 +103,7 @@ def guard_path(obstacles, direction, location, add_obstacle):
 
     return len(visited), loops_found
 
+
 mark("6A", guard_path(obstacles, start_direction, start_location, add_obstacle=False)[0], 5269)
 # mark("6B", guard_path(obstacles, start_direction, start_location, add_obstacle=True)[1], 1957)
 mark("6B", None, 1957, skip_and_add_time=4.6)
@@ -104,6 +111,8 @@ mark("6B", None, 1957, skip_and_add_time=4.6)
 data = read("7", 2024, raw=True, strip=True)
 lines = [l.replace(": ", ":").split(":") for l in data]
 lines = [[int(l[0]), [int(s) for s in l[1].split(" ")]] for l in lines]
+
+
 def all_combinations(target, l, task_b=False):
     combinations = {l[0]}
     l = l[1:]
@@ -119,6 +128,8 @@ def all_combinations(target, l, task_b=False):
         l = l[1:]
         combinations = new_combinations
     return combinations
+
+
 mark("7A", sum(l[0] if (l[0] in all_combinations(l[0], l[1])) else 0 for l in lines), 2437272016585)
 # mark("7B", sum(l[0] if (l[0] in all_combinations(l[0], l[1], True)) else 0 for l in lines), 162987117690649)
 mark("7B", None, 162987117690649, skip_and_add_time=2.45)
@@ -130,6 +141,8 @@ for y, l in enumerate(data):
     for x, c in enumerate(l):
         if c != ".":
             antennas[c].append((x, y))
+
+
 def count_hotspots(more_steps=False):
     hotspots = set()
     for key in antennas.keys():
@@ -137,7 +150,7 @@ def count_hotspots(more_steps=False):
         for a in ants:
             for b in ants:
                 if a != b:
-                    new_x, new_y = 2*a[0] - b[0], 2*a[1] - b[1]
+                    new_x, new_y = 2 * a[0] - b[0], 2 * a[1] - b[1]
                     while 0 <= new_x < x_max and 0 <= new_y < y_max:
                         hotspots.add((new_x, new_y))
                         new_x += a[0] - b[0]
@@ -149,10 +162,14 @@ def count_hotspots(more_steps=False):
             for ant in antennas[key]:
                 hotspots.add(ant)
     return len(hotspots)
+
+
 mark("8A", count_hotspots(), 214)
 mark("8B", count_hotspots(more_steps=True), 809)
 
 data = read("9", 2024, raw=True, strip=True)[0]
+
+
 def task9A(data):
     left_digit = 0
     pos = 0
@@ -178,6 +195,7 @@ def task9A(data):
         data = data[1:]
     return checksum
 
+
 def task9B(d=None):
     start_len = len(d)
     digits = list(range(0, len(d) // 2 + 1))
@@ -202,7 +220,7 @@ def task9B(d=None):
             else:
                 d = (d[:space_searcher] + [0] + [space_needed] +
                      [d[space_searcher] - space_needed] +
-                     d[space_searcher + 1:digit_to_move_index-1] +
+                     d[space_searcher + 1:digit_to_move_index - 1] +
                      [d[digit_to_move_index - 1] + space_needed + additional_hole_after] +
                      d[digit_to_move_index + 2:])
             digits = (digits[:space_searcher // 2 + 1] +
@@ -231,11 +249,13 @@ def task9B(d=None):
 
     return checksum
 
+
 mark("9A", task9A(data), 6291146824486)
 # mark("9B", task9B(data), 6307279963620)
 mark("9B", None, 162987117690649, skip_and_add_time=5.57)
 
 data = read("10", 2024, raw=True, strip=True)
+
 
 @functools.cache
 def nines_reachable_from(x, y, count=False):
@@ -243,9 +263,9 @@ def nines_reachable_from(x, y, count=False):
     current_value = int(data[y][x])
     if current_value == 9:
         return 1 if count else {(x, y)}
-    neighbor_candidates = [[x, y+1], [x+1, y], [x, y-1], [x-1, y]]
-    candidates = list(filter(lambda p : 0 <= p[0] < len(data) and 0 <= p[1] < len(data), neighbor_candidates))
-    step_candidates = list(filter(lambda p : int(data[p[1]][p[0]]) == current_value + 1, candidates))
+    neighbor_candidates = [[x, y + 1], [x + 1, y], [x, y - 1], [x - 1, y]]
+    candidates = list(filter(lambda p: 0 <= p[0] < len(data) and 0 <= p[1] < len(data), neighbor_candidates))
+    step_candidates = list(filter(lambda p: int(data[p[1]][p[0]]) == current_value + 1, candidates))
     if step_candidates:
         if count:
             nines = 0
@@ -260,6 +280,7 @@ def nines_reachable_from(x, y, count=False):
     else:
         return 0 if count else set()
 
+
 def task10(data, count=False):
     trailheads = 0
     for y, l in enumerate(data):
@@ -268,10 +289,13 @@ def task10(data, count=False):
                 trailheads += nines_reachable_from(x, y, count) if count else len(nines_reachable_from(x, y, count))
     return trailheads
 
+
 mark("10A", task10(data), 587)
 mark("10B", task10(data, count=True), 1340)
 
 data = read("11", 2024)[0]
+
+
 def split(numbers, times):
     if times == 0:
         return numbers
@@ -288,8 +312,12 @@ def split(numbers, times):
             else:
                 split_numbers[num * 2024] += numbers[num]
         return split(split_numbers, times - 1)
+
+
 def task11(numbers, times):
     return sum(split(Counter(numbers), times).values())
+
+
 mark("11A", task11(data, 25), 235850)
 mark("11B", task11(data, 75), 279903140844645)
 
@@ -300,6 +328,7 @@ visited = set()
 for y, line in enumerate(data):
     for x, c in enumerate(line):
         unvisited.add((x, y, c))
+
 
 def score_region(tile, area, perimeter, corners):
     global unvisited, visited
@@ -323,7 +352,7 @@ def score_region(tile, area, perimeter, corners):
             (-1, +0),
             (-1, -1),
             (+0, -1),
-            (+1, -1),]
+            (+1, -1), ]
     is_inside = []
     for d in dirs:
         nb = (tile[0] + d[0], tile[1] + d[1], tile[2])
@@ -348,6 +377,7 @@ def score_region(tile, area, perimeter, corners):
 
     return area, perimeter, corners
 
+
 def task12():
     global unvisited, visited
     scoreA, scoreB = 0, 0
@@ -359,6 +389,7 @@ def task12():
         scoreA += a * p
         scoreB += a * c
     return scoreA, scoreB
+
 
 ansA, ansB = task12()
 mark("12A", ansA, 1471452)
@@ -376,14 +407,21 @@ while len(data) >= 3:
     data = data[4:]
     rows += [row]
 
-tokens = 0
-for ax, ay, bx, by, X, Y in rows:
-    row_min = None
-    for k in range(0, min(X // min(ax, bx) + 1, 101)):
-        for m in range(0, min(Y // min(ay, by) + 1, 101)):
-            if k * ax + m * bx == X and k * ay + m * by == Y:
-                cand = 3 * k + m
-                row_min = min(cand, row_min) if row_min else cand
-    tokens += row_min if row_min else 0
+def task13(rows, taskB=False):
+    tokens = 0
+    for ax, ay, bx, by, X, Y in rows:
+        new_cand = None
+        if taskB:
+            X += 10000000000000
+            Y += 10000000000000
+        A = np.array([[ax, bx], [ay, by]])
+        guess = np.dot(np.linalg.inv(A), [X, Y])
+        k = round(guess[0])
+        m = round(guess[1])
+        if k * ax + m * bx == X and k * ay + m * by == Y:
+            new_cand = 3 * k + m
+        tokens += new_cand if new_cand else 0
+    return tokens
 
-mark("13A", tokens, 29517)
+mark("13A", task13(rows), 29517)
+mark("13B", task13(rows, taskB=True), 103570327981381)

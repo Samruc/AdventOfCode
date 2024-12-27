@@ -425,3 +425,212 @@ def task13(rows, taskB=False):
 
 mark("13A", task13(rows), 29517)
 mark("13B", task13(rows, taskB=True), 103570327981381)
+
+data = read("14", 2024, raw=True, strip=True)
+robots = []
+for row in data:
+    r = row.replace(",", " ").replace("=", " ").split(" ")
+    robots.append([int(a) for a in r[1:3] + r[4:]])
+
+def task14(robots, seconds, max_x, max_y):
+    Q1, Q2, Q3, Q4 = 0, 0, 0, 0
+    for r in robots:
+        r[0] = (r[0] + seconds * r[2]) % max_x
+        r[1] = (r[1] + seconds * r[3]) % max_y
+        if r[0] < max_x // 2 and r[1] < max_y // 2:
+            Q1 += 1
+        elif r[0] < max_x // 2 and r[1] >= max_y // 2 + 1:
+            Q2 += 1
+        elif r[0] >= max_x // 2 + 1 and r[1] < max_y // 2:
+            Q3 += 1
+        elif r[0] >= max_x // 2 + 1 and r[1] >= max_y // 2 + 1:
+            Q4 += 1
+    return Q1 * Q2 * Q3 * Q4, robots
+
+mark("14A", task14(robots, 100, 101, 103)[0], 215987200)
+# Task 14B solved by inspection!
+
+data = read("15", 2024, raw=True, strip=True)
+walls, boxes = set(), set()
+pos = None
+max_x = len(data[0])
+max_y = 0
+
+for y, line in enumerate(data):
+    if line == "":
+        break
+    max_y += 1
+    for x, c in enumerate(line):
+        if c == "#":
+            walls.add((x, y))
+        elif c == "O":
+            boxes.add((x, y))
+        elif c == "@":
+            pos = (x, y)
+        elif c == ".":
+            pass
+        else:
+            assert False, c
+
+def pushable(d):
+    global dirs, walls, boxes, pos
+    temp_pos = pos
+    offset = dirs[d]
+    while (temp_pos[0] + offset[0], temp_pos[1] + offset[1]) not in walls:
+        if (temp_pos[0] + offset[0], temp_pos[1] + offset[1]) not in boxes:
+            return True
+        temp_pos = (temp_pos[0] + offset[0], temp_pos[1] + offset[1])
+    return False
+
+def push(d):
+    global dirs, boxes, pos
+    temp_pos = pos
+    offset = dirs[d]
+    pos = (pos[0] + offset[0], pos[1] + offset[1])
+    if (temp_pos[0] + offset[0], temp_pos[1] + offset[1]) in boxes:
+        boxes.remove((temp_pos[0] + offset[0], temp_pos[1] + offset[1]))
+        temp_pos = temp_pos[0] + offset[0], temp_pos[1] + offset[1]
+        while (temp_pos[0] + offset[0], temp_pos[1] + offset[1]) in boxes:
+            temp_pos = temp_pos[0] + offset[0], temp_pos[1] + offset[1]
+        boxes.add((temp_pos[0] + offset[0], temp_pos[1] + offset[1]))
+
+moves = "".join(data[max_y + 1:])
+while moves:
+    if pushable(moves[0]):
+        push(moves[0])
+    moves = moves[1:]
+
+mark("15A", sum(b[0] + 100*b[1] for b in boxes), 1430536)
+
+walls, boxes = set(), set()
+pos = None
+max_x *= 2
+moves = "".join(data[max_y + 1:])
+
+for y, line in enumerate(data):
+    if line == "":
+        break
+    for x, c in enumerate(line):
+        if c == "#":
+            walls.add((2*x, y))
+            walls.add((2*x + 1, y))
+        elif c == "O":
+            boxes.add((2*x, y))
+        elif c == "@":
+            pos = (2*x, y)
+        elif c == ".":
+            pass
+        else:
+            assert False, c
+def printB():
+    global max_x, max_y, boxes, walls, pos
+    for y in range(max_y):
+        for x in range(max_x):
+            if (x, y) in boxes:
+                print("[", end="")
+            elif (x, y) in walls:
+                print("#", end="")
+            elif (x, y) == pos:
+                print("@", end="")
+            elif (x - 1, y) in boxes:
+                print("]", end="")
+            else:
+                print(".", end="")
+        print()
+
+def box_is_pushableB(box, d):
+    global dirs, walls, boxes
+    assert d in "^v"
+    target1, target2 = (box[0], box[1] + dirs[d][1]), (box[0] + 1, box[1] + dirs[d][1])
+    if target1 in walls or target2 in walls:
+        return False
+    else:
+        p = True
+        if target1 in boxes:
+            if not box_is_pushableB(target1, d):
+                p = False
+        if target2 in boxes:
+            if not box_is_pushableB(target2, d):
+                p = False
+        if (target1[0] - 1, target1[1]) in boxes:
+            if not box_is_pushableB((target1[0] - 1, target1[1]), d):
+                p = False
+        return p
+
+def push_boxB(box, d):
+    global dirs, boxes
+    assert d in "^v"
+    boxes.remove(box)
+    if (box[0], box[1] + dirs[d][1]) in boxes:
+        push_boxB((box[0], box[1] + dirs[d][1]), d)
+    if (box[0] - 1, box[1] + dirs[d][1]) in boxes:
+        push_boxB((box[0] - 1, box[1] + dirs[d][1]), d)
+    if (box[0] + 1, box[1] + dirs[d][1]) in boxes:
+        push_boxB((box[0] + 1, box[1] + dirs[d][1]), d)
+    boxes.add((box[0], box[1] + dirs[d][1]))
+
+def moveableB(d):
+    global dirs, walls, boxes, pos
+    temp_pos = pos
+    offset = dirs[d]
+    if d == ">":
+        while (temp_pos[0] + 1, temp_pos[1]) not in walls:
+            if (temp_pos[0] + 1, temp_pos[1]) not in boxes:
+                return True
+            temp_pos = (temp_pos[0] + 2, temp_pos[1])
+    if d == "<":
+        while (temp_pos[0] - 1, temp_pos[1]) not in walls:
+            if (temp_pos[0] - 2, temp_pos[1]) not in boxes:
+                return True
+            temp_pos = (temp_pos[0] - 2, temp_pos[1])
+        return False
+    if d in "^v":
+        target = (pos[0], pos[1] + offset[1])
+        if target in walls:
+            return False
+        elif target not in boxes and (target[0] - 1, target[1]) not in boxes:
+            return True
+        elif target in boxes:
+            return box_is_pushableB(target, d)
+        elif (target[0] - 1, target[1]) in boxes:
+            return box_is_pushableB((target[0] - 1, target[1]), d)
+        else:
+            assert False, "Missed something"
+
+def moveB(d):
+    global dirs, boxes, pos
+    offset = dirs[d]
+    if d in "^v":
+        target = (pos[0], pos[1] + offset[1])
+        pos = target
+        if target in boxes:
+            push_boxB(target, d)
+        elif (target[0] - 1, target[1]) in boxes:
+            push_boxB((target[0] - 1, target[1]), d)
+        else:
+            assert "Missed something"
+    elif d == "<":
+        temp_pos = pos
+        pos = (pos[0] - 1, pos[1])
+        while (temp_pos[0] - 2, temp_pos[1]) in boxes:
+            boxes.remove((temp_pos[0] - 2, temp_pos[1]))
+            boxes.add((temp_pos[0] - 3, temp_pos[1]))
+            temp_pos = (temp_pos[0] - 2, temp_pos[1])
+    elif d == ">":
+        temp_pos = pos
+        pos = (pos[0] + 1, pos[1])
+        while (temp_pos[0] + 1, temp_pos[1]) in boxes:
+            boxes.remove((temp_pos[0] + 1, temp_pos[1]))
+            boxes.add((temp_pos[0] + 2, temp_pos[1]))
+            temp_pos = (temp_pos[0] + 2, temp_pos[1])
+    else:
+        assert False
+
+n_moves = 0
+while moves:
+    if moveableB(moves[0]):
+        moveB(moves[0])
+    moves = moves[1:]
+    n_moves += 1
+
+mark("15B", sum(b[0] + 100*b[1] for b in boxes), 1452348)

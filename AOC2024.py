@@ -1,4 +1,6 @@
 import functools
+import sys
+
 import numpy as np
 import re
 from collections import Counter, defaultdict
@@ -407,6 +409,7 @@ while len(data) >= 3:
     data = data[4:]
     rows += [row]
 
+
 def task13(rows, taskB=False):
     tokens = 0
     for ax, ay, bx, by, X, Y in rows:
@@ -423,6 +426,7 @@ def task13(rows, taskB=False):
         tokens += new_cand if new_cand else 0
     return tokens
 
+
 mark("13A", task13(rows), 29517)
 mark("13B", task13(rows, taskB=True), 103570327981381)
 
@@ -431,6 +435,7 @@ robots = []
 for row in data:
     r = row.replace(",", " ").replace("=", " ").split(" ")
     robots.append([int(a) for a in r[1:3] + r[4:]])
+
 
 def task14(robots, seconds, max_x, max_y):
     Q1, Q2, Q3, Q4 = 0, 0, 0, 0
@@ -446,6 +451,7 @@ def task14(robots, seconds, max_x, max_y):
         elif r[0] >= max_x // 2 + 1 and r[1] >= max_y // 2 + 1:
             Q4 += 1
     return Q1 * Q2 * Q3 * Q4, robots
+
 
 mark("14A", task14(robots, 100, 101, 103)[0], 215987200)
 # Task 14B solved by inspection!
@@ -472,6 +478,7 @@ for y, line in enumerate(data):
         else:
             assert False, c
 
+
 def pushable(d):
     global dirs, walls, boxes, pos
     temp_pos = pos
@@ -481,6 +488,7 @@ def pushable(d):
             return True
         temp_pos = (temp_pos[0] + offset[0], temp_pos[1] + offset[1])
     return False
+
 
 def push(d):
     global dirs, boxes, pos
@@ -494,13 +502,14 @@ def push(d):
             temp_pos = temp_pos[0] + offset[0], temp_pos[1] + offset[1]
         boxes.add((temp_pos[0] + offset[0], temp_pos[1] + offset[1]))
 
+
 moves = "".join(data[max_y + 1:])
 while moves:
     if pushable(moves[0]):
         push(moves[0])
     moves = moves[1:]
 
-mark("15A", sum(b[0] + 100*b[1] for b in boxes), 1430536)
+mark("15A", sum(b[0] + 100 * b[1] for b in boxes), 1430536)
 
 walls, boxes = set(), set()
 pos = None
@@ -512,16 +521,18 @@ for y, line in enumerate(data):
         break
     for x, c in enumerate(line):
         if c == "#":
-            walls.add((2*x, y))
-            walls.add((2*x + 1, y))
+            walls.add((2 * x, y))
+            walls.add((2 * x + 1, y))
         elif c == "O":
-            boxes.add((2*x, y))
+            boxes.add((2 * x, y))
         elif c == "@":
-            pos = (2*x, y)
+            pos = (2 * x, y)
         elif c == ".":
             pass
         else:
             assert False, c
+
+
 def printB():
     global max_x, max_y, boxes, walls, pos
     for y in range(max_y):
@@ -537,6 +548,7 @@ def printB():
             else:
                 print(".", end="")
         print()
+
 
 def box_is_pushableB(box, d):
     global dirs, walls, boxes
@@ -557,6 +569,7 @@ def box_is_pushableB(box, d):
                 p = False
         return p
 
+
 def push_boxB(box, d):
     global dirs, boxes
     assert d in "^v"
@@ -568,6 +581,7 @@ def push_boxB(box, d):
     if (box[0] + 1, box[1] + dirs[d][1]) in boxes:
         push_boxB((box[0] + 1, box[1] + dirs[d][1]), d)
     boxes.add((box[0], box[1] + dirs[d][1]))
+
 
 def moveableB(d):
     global dirs, walls, boxes, pos
@@ -596,6 +610,7 @@ def moveableB(d):
             return box_is_pushableB((target[0] - 1, target[1]), d)
         else:
             assert False, "Missed something"
+
 
 def moveB(d):
     global dirs, boxes, pos
@@ -626,6 +641,7 @@ def moveB(d):
     else:
         assert False
 
+
 n_moves = 0
 while moves:
     if moveableB(moves[0]):
@@ -633,4 +649,91 @@ while moves:
     moves = moves[1:]
     n_moves += 1
 
-mark("15B", sum(b[0] + 100*b[1] for b in boxes), 1452348)
+mark("15B", sum(b[0] + 100 * b[1] for b in boxes), 1452348)
+
+data = read("16", 2024, raw=True, strip=True)
+walls = set()
+start, end = None, None
+d = ">"
+for y, line in enumerate(data):
+    for x, c in enumerate(line):
+        if c == "S":
+            start = (x, y)
+        elif c == "E":
+            end = (x, y)
+        elif c == "#":
+            walls.add((x, y))
+        elif c == ".":
+            pass
+        else:
+            assert False, "Unknown char"
+
+min_scores = {}
+
+def task16A(start_pos, start_d):
+    global walls, dirs, end, min_scores
+
+    states = [[start_pos, start_d, 0]]
+
+    while states:
+        pos, d, score = states[0]
+        states = states[1:]
+
+        state = str(pos) + d
+
+        if state in min_scores and min_scores[state] <= score:
+            continue
+
+        min_scores[state] = score
+        turns = [d, turn[d], turn[turn[turn[d]]]]
+
+        for new_d in turns:
+            offset = dirs[new_d]
+            target = (pos[0] + offset[0], pos[1] + offset[1])
+            if target not in walls:
+                states += [[target, new_d, score + 1 if offset == dirs[d] else score + 1001]]
+
+    return min(10 ** 9 if str(end) + end_dir not in min_scores
+               else min_scores[str(end) + end_dir] for end_dir in dirs.keys())
+
+
+mark("16A", task16A(start, d), 108504)
+
+def task16B():
+    global start, end, min_scores
+    end_dir = None
+    end_score = None
+    for d in dirs.keys():
+        entry = str(end) + d
+        if entry in min_scores:
+            if not end_score or min_scores[entry] < end_score:
+                end_score = min_scores[entry]
+                end_dir = d
+
+    states = [[end, end_dir, end_score]]
+
+    visited_states = set()
+    visited_tiles = {end}
+
+    while states:
+        pos, d, score = states[0]
+        states = states[1:]
+
+        state = str(pos) + d
+        if state in visited_states:
+            continue
+        visited_states.add(state)
+
+        turns = [d, turn[d], turn[turn[turn[d]]]]
+
+        for prev_d in turns:
+            offset = dirs[d]
+            target = (pos[0] - offset[0], pos[1] - offset[1])
+            if (target not in walls and str(target) + prev_d in min_scores and
+                    min_scores[str(target) + prev_d] == (score - 1 if d == prev_d else score - 1001)):
+                visited_tiles.add(target)
+                states += [[target, prev_d, score - 1 if d == prev_d else score - 1001]]
+
+    return len(visited_tiles)
+
+mark("16B", task16B(), 538)

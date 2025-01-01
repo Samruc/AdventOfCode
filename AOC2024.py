@@ -1,5 +1,6 @@
 import functools
 import sys
+from time import sleep
 
 import numpy as np
 import re
@@ -737,3 +738,84 @@ def task16B():
     return len(visited_tiles)
 
 mark("16B", task16B(), 538)
+
+data = read("17", 2024, raw=True, strip=True)
+A = int(data[0].split(" ")[2])
+B = int(data[1].split(" ")[2])
+C = int(data[2].split(" ")[2])
+program = [int(d) for d in data[4].split(" ")[1].split(",")]
+
+def combo(d):
+    global A, B, C
+    if d <= 3:
+        return d
+    elif d == 4:
+        return A
+    elif d == 5:
+        return B
+    elif d == 6:
+        return C
+    else:
+        assert False, "Reserved value"
+
+def task17A():
+    global A, B, C, program
+    done = False
+    instruction_pointer = 0
+    output = None
+
+    while not done:
+        operation = program[instruction_pointer]
+        operand = program[instruction_pointer + 1]
+
+        if operation == 0:
+            A = A // (2 ** combo(operand))
+        elif operation == 1:
+            B = B ^ operand
+        elif operation == 2:
+            B = combo(operand) % 8
+        elif operation == 3 and A != 0:
+            instruction_pointer = operand - 2
+        elif operation == 4:
+            B = B ^ C
+        elif operation == 5:
+            s = str(combo(operand) % 8)
+            if output:
+                output += "," + s
+            else:
+                output = s
+        elif operation == 6:
+            B = A // (2 ** combo(operand))
+        elif operation == 7:
+            C = A // (2 ** combo(operand))
+
+        instruction_pointer += 2
+
+        if instruction_pointer >= len(program):
+            break
+
+    return output
+
+mark("17A", task17A(), "5,1,4,0,5,1,0,2,6")
+
+def task17B():
+    global A, B, C
+
+    numbers_to_match = 1
+    A_cand = 0
+    while numbers_to_match <= len(program):
+        A_cand *= 8
+        target = program[len(program) - numbers_to_match:]
+        n = 0
+        while True:
+            A, B, C = A_cand + n, 0, 0
+            output = [int(d) for d in task17A().split(",")]
+            if output == target:
+                A_cand += n
+                break
+            n += 1
+        numbers_to_match += 1
+
+    return A_cand
+
+mark("17B", task17B(), 202322936867370)

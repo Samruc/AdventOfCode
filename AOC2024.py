@@ -1,3 +1,4 @@
+import copy
 import functools
 import sys
 from time import sleep
@@ -819,3 +820,73 @@ def task17B():
     return A_cand
 
 mark("17B", task17B(), 202322936867370)
+
+data = read("18", 2024, raw=True, strip=True)
+
+size = int(data[0])  # To allow for easier test data
+walls_A = int(data[1])
+data = data[2:]
+start, end = (0, 0), (size - 1, size - 1)
+walls = set()
+
+for line in data[:walls_A]:
+    x, y = [int(d) for d in line.split(",")]
+    walls.add((x, y))
+
+for n in range(size):
+    walls.add((-1, n))
+    walls.add((n, -1))
+    walls.add((size, n))
+    walls.add((n, size))
+
+min_scores = {}
+best_path = None
+
+def task18A():
+    global walls, dirs, start, end, min_scores, best_path
+
+    states = [[start, 0, []]]
+
+    while states:
+        pos, score, previous_tiles = states[0]
+        states = states[1:]
+
+        state = str(pos)
+
+        if state in min_scores and min_scores[state] <= score:
+            continue
+
+        if pos == end:
+            best_path = copy.deepcopy(previous_tiles)
+
+        min_scores[state] = score
+
+        for d in dirs:
+            offset = dirs[d]
+            target = (pos[0] + offset[0], pos[1] + offset[1])
+            if target not in walls:
+                previous_tiles += [str(target)]
+                states += [[target, score + 1, previous_tiles]]
+                previous_tiles = previous_tiles[:-1]
+
+    return -1 if str(end) not in min_scores else min_scores[str(end)]
+
+mark("18A", task18A(), 356)
+
+data = data[walls_A:]
+
+def task18B():
+    global walls, size, data, min_scores, best_path
+    while data:
+        min_scores = {}
+        x, y = [int(d) for d in data[0].split(",")]
+        walls.add((x, y))
+        data = data[1:]
+        if str((x, y)) not in best_path:
+            continue
+        if task18A() == -1:
+            return str(x) + "," + str(y)
+    assert False, "No blocking byte found"
+
+# mark("18B", task18B(), "22,33")
+mark("18B", None, "22,33", skip_and_add_time=0.61)

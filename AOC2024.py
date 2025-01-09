@@ -845,7 +845,8 @@ best_path = None
 def task18A():
     global walls, dirs, start, end, min_scores, best_path
 
-    states = [[start, 0, []]]
+    states = [[start, 0, [start]]]
+    min_scores[start] = 0
 
     while states:
         pos, score, previous_tiles = states[0]
@@ -890,3 +891,161 @@ def task18B():
 
 # mark("18B", task18B(), "22,33")
 mark("18B", None, "22,33", skip_and_add_time=0.61)
+
+data = read("19", 2024, raw=True, strip=True)
+towels = set(data[0].split(", "))
+data = data[2:]
+
+def towelable(s, towels):
+    if s == "":
+        return True
+    return any(s.startswith(t) and towelable(s[len(t):], towels) for t in towels)
+
+@functools.cache
+def towel_ways(s):
+    global towels
+    if s == "":
+        return 1
+    return sum(towel_ways(s[len(t):]) if s.startswith(t) else 0 for t in towels)
+
+mark("19A", sum(1 if towelable(s, towels) else 0 for s in data), 374)
+# mark("19B", sum(towel_ways(str(s)) for s in data), 1100663950563322)
+mark("19B", None, 1100663950563322, skip_and_add_time=0.51)
+
+
+data = read("20", 2024, raw=True, strip=True)
+
+walls = set()
+for y, line in enumerate(data):
+    for x, c in enumerate(line):
+        if c == "S":
+            start = (x, y)
+        if c == "E":
+            end = (x, y)
+        if c == "#":
+            walls.add((x, y))
+
+min_scores = {}
+best_path = None
+task18A()
+
+def task20(cheat_size):
+    global min_scores, best_path
+    cheats = {}
+    ans = 0
+    offsets = []
+    for i in range(-cheat_size, cheat_size + 1):
+        width = cheat_size - abs(i)
+        for j in range(-width, width + 1):
+            offsets += [[i, j]]
+    for tile in best_path:
+        for o in offsets:
+            t = [int(d) for d in str(tile)[1:-1].split(",")]
+            cheat_tile = str((t[0] + o[0], t[1] + o[1]))
+            taxicab_cheat_distance = abs(o[0]) + abs(o[1])
+            if cheat_tile in min_scores and min_scores[cheat_tile] > min_scores[tile] + taxicab_cheat_distance:
+                cheat_value = min_scores[cheat_tile] - min_scores[tile] - taxicab_cheat_distance
+                if cheat_value not in cheats:
+                    cheats[cheat_value] = 1
+                else:
+                    cheats[cheat_value] += 1
+                if cheat_value >= 100:
+                    ans += 1
+    return ans
+
+mark("20A", task20(2), 1384)
+# mark("20B", task20(20), 1008542)
+mark("20B", None, 1008542, skip_and_add_time=5.54)
+
+data = read("21", 2024, raw=True, strip=True)
+
+neighbors = {
+    "a": "^>",
+    ">": "av",
+    "^": "av",
+    "v": ">^<",
+    "<": "v",
+}
+
+possible_moves = {
+        "A<": "0",
+        "A^": "3",
+        "0^": "2",
+        "0>": "A",
+        "1>": "2",
+        "1^": "4",
+        "2v": "0",
+        "2<": "1",
+        "2>": "3",
+        "2^": "5",
+        "3v": "A",
+        "3<": "2",
+        "3^": "6",
+        "4v": "1",
+        "4>": "5",
+        "4^": "7",
+        "5v": "2",
+        "5<": "4",
+        "5>": "6",
+        "5^": "8",
+        "6v": "3",
+        "6<": "5",
+        "6^": "9",
+        "7v": "4",
+        "7>": "8",
+        "8v": "5",
+        "8<": "7",
+        "8>": "9",
+        "9v": "6",
+        "9<": "8",
+
+        "av": ">",
+        "a<": "^",
+        ">^": "a",
+        "><": "v",
+        "^>": "a",
+        "^v": "v",
+        "v>": ">",
+        "v^": "^",
+        "v<": "<",
+        "<>": "v",
+    }
+
+def task21A(start, end):
+    global min_scores
+
+    states = [[start, 0]]
+
+    while states:
+        pos, score = states[0]
+        states = states[1:]
+
+        if pos in min_scores and min_scores[pos] <= score:
+            continue
+
+        min_scores[pos] = score
+
+        for neighbor in neighbors[pos[2]]:
+            states.append([pos[:2] + neighbor, score + 1])
+
+        if pos[2] != "a" and pos[1:3] in possible_moves:
+            states.append([pos[:1] + possible_moves[pos[1:3]] + pos[2], score + 1])
+
+        if pos[2] == "a" and pos[1] != "a" and pos[0:2] in possible_moves:
+            states.append([pos[:0] + possible_moves[pos[0:2]] + pos[1:], score + 1])
+
+    return min_scores[end]
+
+min_scores = {}
+data_sum = 0
+for line in data:
+    line_to_number = int(line[:-1])
+    line = "A" + line
+    line_sum = 0
+    while len(line) >= 2:
+        min_scores = {}
+        line_sum += task21A(line[0] + "aa", line[1] + "aa") + 1
+        line = line[1:]
+    data_sum += line_sum * line_to_number
+
+mark("21A", data_sum, 157892)

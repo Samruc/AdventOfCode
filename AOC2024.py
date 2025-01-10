@@ -957,8 +957,9 @@ mark("20A", task20(2), 1384)
 # mark("20B", task20(20), 1008542)
 mark("20B", None, 1008542, skip_and_add_time=5.54)
 
-data = read("21", 2024, raw=True, strip=True)
+data = read("21test", 2024, raw=True, strip=True)
 #data = [data[0]]
+pprint(data)
 
 neighbors = {
     "A": "03",
@@ -1023,22 +1024,69 @@ possible_moves = {
         "<>": "v",
     }
 
-
 @functools.cache
 def task21A(start, end):
-    global min_scores
+    global min_scores, min_scores_inner_keypad
 
     states = [[start, 0]]
     robot_levels = len(start)
+
+    assert all(c == "a" for c in start[1:])
+    assert all(c == "a" for c in end[1:])
+
+    for d in "<^v>":
+        if (len(start) >= 2 and
+                start[0] + d in possible_moves and
+                possible_moves[start[0] + d] == end[0]):
+            score = task21A(start[1:], d + end[2:]) + 1
+            min_scores = {}
+            score += task21A(d + end[2:], start[1:])
+            return score
+        if (len(start) >= 2 and
+                start[0] + d in possible_moves and
+                possible_moves[start[0] + d] + d in possible_moves and
+                possible_moves[possible_moves[start[0] + d] + d] == end[0]):
+            score = task21A(start[1:], d + end[2:]) + 2
+            min_scores = {}
+            score += task21A(d + end[2:], start[1:])
+            return score
+        if (len(start) >= 2 and
+                start[0] + d in possible_moves and
+                possible_moves[start[0] + d] + d in possible_moves and
+                possible_moves[possible_moves[start[0] + d] + d] in possible_moves and
+                possible_moves[possible_moves[possible_moves[start[0] + d] + d] + d] == end[0]):
+            score = task21A(start[1:], d + end[2:]) + 3
+            min_scores = {}
+            score += task21A(d + end[2:], start[1:])
+            return score
+
+    if (len(start) >= 2 and
+            start[0] == "a" and end[0] == "<"):
+        score = task21A(start[1:], "v" + end[2:]) + 1
+        min_scores = {}
+        score += task21A("v" + end[2:], "<" + end[2:]) + 2
+        min_scores = {}
+        score += task21A("<" + end[2:], end[1:])
+        return score
+    if (len(start) >= 2 and
+            start[0] == "<" and end[0] == "a"):
+        score = task21A(start[1:], ">" + end[2:]) + 2
+        min_scores = {}
+        score += task21A(">" + end[2:], "^" + end[2:]) + 1
+        min_scores = {}
+        score += task21A("^" + end[2:], end[1:])
+        return score
+
+    relevant_scores = min_scores_inner_keypad if start[0] in "A1234567890" else min_scores
 
     while states:
         pos, score = states[0]
         states = states[1:]
 
-        if pos in min_scores and min_scores[pos] <= score:
+        if pos in relevant_scores and relevant_scores[pos] <= score:
             continue
 
-        min_scores[pos] = score
+        relevant_scores[pos] = score
 
         for neighbor in neighbors[pos[robot_levels - 1]]:
             states.append([pos[:robot_levels - 1] + neighbor, score + 1])
@@ -1051,22 +1099,36 @@ def task21A(start, end):
                                possible_moves[move_slice] +
                                pos[robot_levels - 1 - i:], score + 1])
 
-    return min_scores[end]
+    return relevant_scores[end]
 
-for a in range(2, 10):
+for a in range(3, 9):
     min_scores = {}
+    min_scores_inner_keypad = {}
     data_sum = 0
     for line in data:
         line_to_number = int(line[:-1])
         line = "A" + line
         line_sum = 0
         while len(line) >= 2:
-            min_scores = {}
+            min_scores_inner_keypad = {}
             line_sum += task21A(line[0] + "a"*(a - 1),
                                 line[1] + "a"*(a - 1)) + 1
             line = line[1:]
         data_sum += line_sum * line_to_number
     print(a, data_sum)
 
+# mark("21A", data_sum, 157892)
 
-mark("21A", data_sum, 157892)
+
+# For 21test:
+
+# 3 126384
+# 4 310188
+# 5 757754
+
+
+# For 21:
+
+# 3 157892
+# 4 389154
+# 5 965210

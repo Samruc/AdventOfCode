@@ -958,8 +958,20 @@ mark("20A", task20(2), 1384)
 mark("20B", None, 1008542, skip_and_add_time=5.54)
 
 data = read("21", 2024, raw=True, strip=True)
+#data = [data[0]]
 
 neighbors = {
+    "A": "03",
+    "0": "A2",
+    "1": "24",
+    "2": "0135",
+    "3": "A26",
+    "4": "157",
+    "5": "2468",
+    "6": "359",
+    "7": "48",
+    "8": "579",
+    "9": "68",
     "a": "^>",
     ">": "av",
     "^": "av",
@@ -1011,10 +1023,13 @@ possible_moves = {
         "<>": "v",
     }
 
+
+@functools.cache
 def task21A(start, end):
     global min_scores
 
     states = [[start, 0]]
+    robot_levels = len(start)
 
     while states:
         pos, score = states[0]
@@ -1025,27 +1040,33 @@ def task21A(start, end):
 
         min_scores[pos] = score
 
-        for neighbor in neighbors[pos[2]]:
-            states.append([pos[:2] + neighbor, score + 1])
+        for neighbor in neighbors[pos[robot_levels - 1]]:
+            states.append([pos[:robot_levels - 1] + neighbor, score + 1])
 
-        if pos[2] != "a" and pos[1:3] in possible_moves:
-            states.append([pos[:1] + possible_moves[pos[1:3]] + pos[2], score + 1])
-
-        if pos[2] == "a" and pos[1] != "a" and pos[0:2] in possible_moves:
-            states.append([pos[:0] + possible_moves[pos[0:2]] + pos[1:], score + 1])
+        for i in range(robot_levels - 1):
+            move_slice = pos[(robot_levels - 2 - i):robot_levels - i]
+            if (all(c == "a" for c in pos[robot_levels - i:]) and
+                    pos[robot_levels - 1 - i] != "a" and move_slice in possible_moves):
+                states.append([pos[:robot_levels - 2 - i] +
+                               possible_moves[move_slice] +
+                               pos[robot_levels - 1 - i:], score + 1])
 
     return min_scores[end]
 
-min_scores = {}
-data_sum = 0
-for line in data:
-    line_to_number = int(line[:-1])
-    line = "A" + line
-    line_sum = 0
-    while len(line) >= 2:
-        min_scores = {}
-        line_sum += task21A(line[0] + "aa", line[1] + "aa") + 1
-        line = line[1:]
-    data_sum += line_sum * line_to_number
+for a in range(2, 10):
+    min_scores = {}
+    data_sum = 0
+    for line in data:
+        line_to_number = int(line[:-1])
+        line = "A" + line
+        line_sum = 0
+        while len(line) >= 2:
+            min_scores = {}
+            line_sum += task21A(line[0] + "a"*(a - 1),
+                                line[1] + "a"*(a - 1)) + 1
+            line = line[1:]
+        data_sum += line_sum * line_to_number
+    print(a, data_sum)
+
 
 mark("21A", data_sum, 157892)

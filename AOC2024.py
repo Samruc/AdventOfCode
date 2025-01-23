@@ -1156,7 +1156,8 @@ def task22_step(number, times):
         prices[og_n].append(number % 10)
     return number
 
-mark("22A", sum(task22_step(a, 2000) for a in data), 14476723788)
+# mark("22A", sum(task22_step(a, 2000) for a in data), 14476723788)
+mark("22A", None, 14476723788, skip_and_add_time=0.86)
 
 def task22_score(diff_seq):
     score = 0
@@ -1167,21 +1168,23 @@ def task22_score(diff_seq):
                 break
     return score
 
-max_score = 0
-for i in range(-9, 10):
-    for j in range(-9, 10):
-        for k in range(-9, 10):
-            for l in range(-9, 10):
-                if i + j not in range(-9, 10):
-                    continue
-                if i + j + k not in range(-9, 10):
-                    continue
-                if i + j + k + l not in range(-9, 10):
-                    continue
-                cand = task22_score([i, j, k, l])
-                if cand > max_score:
-                    max_score = cand
-                    print(max_score)
+def task22B():
+    max_score = 0
+    for i in range(-9, 10):
+        for j in range(-9, 10):
+            for k in range(-9, 10):
+                for l in range(-9, 10):
+                    if i + j not in range(-9, 10):
+                        continue
+                    if i + j + k not in range(-9, 10):
+                        continue
+                    if i + j + k + l not in range(-9, 10):
+                        continue
+                    cand = task22_score([i, j, k, l])
+                    if cand > max_score:
+                        max_score = cand
+                        print(max_score)
+    return max_score
 
-mark("22B", max_score, 1630)
+# mark("22B", task22B(), 1630)
 mark("22B", None, 1630, skip_and_add_time=12174)

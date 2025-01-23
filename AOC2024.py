@@ -1122,7 +1122,7 @@ def multiple_expand_and_count(string, times):
         times -= 1
     return c
 
-def task21(robots):
+def task21(data, robots):
     data_sum = 0
     for line in data:
         line_to_number = int(line[:-1])
@@ -1131,5 +1131,57 @@ def task21(robots):
         data_sum += line_sum * line_to_number
     return data_sum
 
-mark("21A", task21(robots=1+2), 157892)
-mark("21B", task21(robots=1+25), 197015606336332)
+mark("21A", task21(data, robots=1+2), 157892)
+mark("21B", task21(data, robots=1+25), 197015606336332)
+
+data = read("22", 2024)
+
+diffs = defaultdict(list)
+prices = defaultdict(list)
+
+def task22_step(number, times):
+    og_n = number
+    prices[og_n].append(number % 10)
+    while times > 0:
+        n = number
+        n ^= (n << 6)
+        n %= 16777216
+        n ^= (n >> 5)
+        n %= 16777216
+        n ^= (n << 11)
+        n %= 16777216
+        times -= 1
+        diffs[og_n].append((n % 10) - (number % 10))
+        number = n
+        prices[og_n].append(number % 10)
+    return number
+
+mark("22A", sum(task22_step(a, 2000) for a in data), 14476723788)
+
+def task22_score(diff_seq):
+    score = 0
+    for n in data:
+        for i in range(0, len(diffs[n]) - 3):
+            if diff_seq == diffs[n][i:i+4]:
+                score += prices[n][i+4]
+                break
+    return score
+
+max_score = 0
+for i in range(-9, 10):
+    for j in range(-9, 10):
+        for k in range(-9, 10):
+            for l in range(-9, 10):
+                if i + j not in range(-9, 10):
+                    continue
+                if i + j + k not in range(-9, 10):
+                    continue
+                if i + j + k + l not in range(-9, 10):
+                    continue
+                cand = task22_score([i, j, k, l])
+                if cand > max_score:
+                    max_score = cand
+                    print(max_score)
+
+mark("22B", max_score, 1630)
+mark("22B", None, 1630, skip_and_add_time=12174)

@@ -1188,3 +1188,127 @@ def task22B():
 
 # mark("22B", task22B(), 1630)
 mark("22B", None, 1630, skip_and_add_time=12174)
+
+data = read("23", 2024, raw=True, strip=True)
+
+connections = defaultdict(list)
+for c in data:
+    n1, n2 = c[:2], c[3:]
+    connections[n1].append(n2)
+    connections[n2].append(n1)
+
+nodes = connections.keys()
+
+def task23A():
+    three_groups = 0
+    for n in nodes:
+        if n[0] != "t":
+            continue
+        for p in connections[n]:
+            for q in connections[n]:
+                if p in connections[q] and p < q:
+                    if p[0] == "t" and p > n:
+                        continue
+                    if q[0] == "t" and q > n:
+                        continue
+                    three_groups += 1
+    return three_groups
+
+mark("23A", task23A(), 1423)
+
+def are_all_connected(nodes):
+    for a in nodes:
+        for b in nodes:
+            if a == b:
+                continue
+            if a not in connections[b]:
+                return False
+    return True
+
+def task23B():
+    for node in nodes:
+        for a in connections[node]:
+            try_with = set([node] + connections[node])
+            try_with.remove(a)
+            if are_all_connected(try_with):
+                return ",".join(sorted(try_with))
+
+mark("23B", task23B(), "gt,ha,ir,jn,jq,kb,lr,lt,nl,oj,pp,qh,vy")
+
+data = read("24", 2024, raw=True, strip=True)
+
+bools = {}
+rools = []
+
+def handle_line(line):
+    global bools, rools
+    if line[0] in bools and line[2] in bools:
+        if line[1] == "AND":
+            bools[line[4]] = bools[line[0]] & bools[line[2]]
+        elif line[1] == "OR":
+            bools[line[4]] = bools[line[0]] | bools[line[2]]
+        elif line[1] == "XOR":
+            bools[line[4]] = bools[line[0]] ^ bools[line[2]]
+    else:
+        rools.append(line)
+
+def task24A():
+    global bools, rools
+    data_part2 = False
+    for line in data:
+        if data_part2:
+            line = line.split(" ")
+            handle_line(line)
+        elif line == "":
+            data_part2 = True
+        else:
+            bools[line[:3]] = int(line[5])
+
+    while rools:
+        line = rools[0]
+        rools = rools[1:]
+        handle_line(line)
+
+    dec = 0
+    for i in range(45, -1, -1):
+        s = str(i)
+        if i < 10:
+            s = "0" + s
+        dec *= 2
+        dec += bools["z" + s]
+
+    return dec
+
+mark("24A", task24A(), 42410633905894)
+
+def task25():
+    data = read("25", 2024, raw=True, strip=True)
+
+    locks = []
+    keys = []
+
+    while data:
+        if data[0] == "#####":
+            locks.append([0, 0, 0, 0, 0])
+            for line in data[1:6]:
+                for i, c in enumerate(line):
+                    if c == "#":
+                        locks[-1][i] += 1
+        elif data[0] == ".....":
+            keys.append([0, 0, 0, 0, 0])
+            for line in data[5:0:-1]:
+                for i, c in enumerate(line):
+                    if c == "#":
+                        keys[-1][i] += 1
+        else:
+            assert False
+        data = data[8:]
+
+    fits = 0
+    for key in keys:
+        for lock in locks:
+            if all(key[i] + lock[i] <= 5 for i in range(5)):
+                fits += 1
+    return fits
+
+mark("25", task25(), 2691)
